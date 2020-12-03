@@ -26,15 +26,16 @@ var UsersRouter = /** @class */ (function (_super) {
     UsersRouter.prototype.setupRoutes = function () {
         //For debugging purposes
         //this.expressRouter.get('/', UsersRouter.useController.getUsers); 
+        //PLEASE REMEBER THAT NOTE-ID HAS TO BE IMPLEMENTED!
         this.expressRouter.get('/:username', UsersRouter.useController.getUser);
-        this.expressRouter.get('/:username/notes', UsersRouter.useController.getNotes);
-        this.expressRouter.get('/:username/notes/:note-id', UsersRouter.useController.getNote);
+        //this.expressRouter.get('/:username/notes', UsersRouter.useController.getNotes);
+        this.expressRouter.get('/:id/notes', UsersRouter.useController.getNote);
         this.expressRouter.post('/', [securityMiddleware_1.SecurityMiddleware.RequireAuth], UsersRouter.useController.addUser);
-        this.expressRouter.post('/:username/notes', [securityMiddleware_1.SecurityMiddleware.RequireAuth], UsersRouter.useController.addNote);
-        this.expressRouter.put('/:username', [securityMiddleware_1.SecurityMiddleware.RequireAuth], UsersRouter.useController.updateUser);
-        this.expressRouter.put('/:username/notes/:note-id', [securityMiddleware_1.SecurityMiddleware.RequireAuth], UsersRouter.useController.updateNotes);
-        this.expressRouter.delete('/:username/:id', [securityMiddleware_1.SecurityMiddleware.RequireAuth], UsersRouter.useController.deleteUser);
-        this.expressRouter.delete('/:username/notes/:note-id', [securityMiddleware_1.SecurityMiddleware.RequireAuth], UsersRouter.useController.deleteNotes);
+        this.expressRouter.post('/:id/notes', [securityMiddleware_1.SecurityMiddleware.RequireAuth], UsersRouter.useController.addNote);
+        this.expressRouter.put('/:username/:id', [securityMiddleware_1.SecurityMiddleware.RequireAuth], UsersRouter.useController.updateUser);
+        this.expressRouter.put('/:id/notes', [securityMiddleware_1.SecurityMiddleware.RequireAuth], UsersRouter.useController.updateNotes);
+        //this.expressRouter.delete('/:username/:id',[SecurityMiddleware.RequireAuth],UsersRouter.useController.deleteUser);
+        this.expressRouter.delete('/:id/notes/:noteid', [securityMiddleware_1.SecurityMiddleware.RequireAuth], UsersRouter.useController.deleteNotes);
     };
     UsersRouter.useController = new usersController_1.UsersController();
     return UsersRouter;

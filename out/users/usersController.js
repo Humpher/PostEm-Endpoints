@@ -18,69 +18,103 @@ var UsersController = /** @class */ (function () {
 
     }*/
     UsersController.prototype.getUser = function (req, res) {
-        var username = req.body.email;
+        var username = req.params.username;
         //const id = Database.stringToId(req.params.id);
         //const notes = req.params.notes;
-        UsersController.db.getOneRecord(UsersController.usersTable, { email: username })
-            .then(function (results) { return res.send({ fn: 'getUser', status: 'success', data: results.username }).end(); })
+        UsersController.db.getOneRecord(UsersController.usersTable, { username: username })
+            .then(function (results) { return res.send({ fn: 'getUser', status: 'success', data: results._id }).end(); })
             .catch(function (reason) { return res.status(500).send(reason).end(); });
     };
     UsersController.prototype.addUser = function (req, res) {
-        var notes = req.body.notes;
-        UsersController.db.addRecord(UsersController.usersTable, { notes: notes })
+        var use = usersModel_1.UsersModel.fromObject(req.body);
+        UsersController.db.addRecord(UsersController.usersTable, use.toObject())
             .then(function (result) { return res.send({ fn: 'addUser', status: 'success' }).end(); })
             .catch(function (reason) { return res.status(500).send(reason).end(); });
     };
     UsersController.prototype.addNote = function (req, res) {
-        var proj = usersModel_1.UsersModel.fromObject(req.body);
-        UsersController.db.addRecord(UsersController.usersTable, proj.toObject())
-            .then(function (result) { return res.send({ fn: 'addNote', status: 'success' }).end(); })
-            .catch(function (reason) { return res.status(500).send(reason).end(); });
-    };
-    UsersController.prototype.getNotes = function (req, res) {
-        var email = req.body.email;
         var id = MongoDB_1.Database.stringToId(req.params.id);
-        UsersController.db.getOneRecord(UsersController.usersTable, { email: email })
-            .then(function (results) { return res.send({ fn: 'getNotes', status: 'success', data: results }).end(); })
+        var notes = req.body.notes;
+        UsersController.db.getOneRecord(UsersController.usersTable, { _id: id })
+            .then(function (results) {
+            if (!results.notes) {
+                results.notes = [];
+            }
+            results.notes.push({ id: MongoDB_1.Database.newId(), note: notes });
+            UsersController.db.updateRecord(UsersController.usersTable, { _id: id }, { $set: { notes: results.notes } })
+                .then(function (results) { return results ? (res.send({ fn: 'updateNotes', status: 'success' })) : (res.send({ fn: 'addNotes', status: 'failure', data: 'Not found' })).end(); })
+                .catch(function (err) { return res.send({ fn: 'addNotes', status: 'failure', data: err }).end(); });
+        })
             .catch(function (reason) { return res.status(500).send(reason).end(); });
+        //const username = req.params.username;
     };
+    /*getNotes(req: express.Request, res: express.Response) {
+
+        const username = req.params.username;
+        const notes = req.body.notes;
+        //const id = Database.stringToId(req.params.id);
+        UsersController.db.getOneRecord(UsersController.usersTable, { username: username, notes:notes })
+            .then((results) => res.send({ fn: 'getNotes', status: 'success', data: results}).end())
+            .catch((reason) => res.status(500).send(reason).end());
+
+            UsersController.db.getRecords(UsersController.usersTable)
+            .then(results => {
+                //extracts just the semester
+                let notes = results.map((x: any) => x.notes);
+                //removes duplciates
+                notes = notes.filter((value: string, index: number, array: any[]) =>
+                    !array.filter((v, i) => value === v && i < index).length);
+                res.send({ fn: 'getNotes', status: 'success', data: { notes: notes } })
+            })
+            .catch((reason) => res.status(500).send(reason).end());
+
+    }*/
     UsersController.prototype.getNote = function (req, res) {
         var username = req.params.username;
-        //const id = Database.stringToId(req.params.id);
-        var notes_id = req.params.notes_id;
-        UsersController.db.getOneRecord(UsersController.usersTable, { username: username, notes_id: notes_id })
+        var id = MongoDB_1.Database.stringToId(req.params.id);
+        //const notes_id = req.params.notes_id;
+        UsersController.db.getOneRecord(UsersController.usersTable, { _id: id })
             .then(function (results) { return res.send({ fn: 'getUser', status: 'success', data: results }).end(); })
             .catch(function (reason) { return res.status(500).send(reason).end(); });
     };
     UsersController.prototype.updateUser = function (req, res) {
         var id = MongoDB_1.Database.stringToId(req.params.id);
-        var username = req.params.username;
-        //delete data.authUser;
-        UsersController.db.updateRecord(UsersController.usersTable, { _id: id }, { $set: req.params.username })
+        var username = req.body.username;
+        delete username.authUser;
+        UsersController.db.updateRecord(UsersController.usersTable, { _id: id }, { $set: req.body })
             .then(function (results) { return results ? (res.send({ fn: 'updateUser', status: 'success' })) : (res.send({ fn: 'updateUser', status: 'failure', data: 'Not found' })).end(); })
             .catch(function (err) { return res.send({ fn: 'updateUser', status: 'failure', data: err }).end(); });
     };
     UsersController.prototype.updateNotes = function (req, res) {
         var id = MongoDB_1.Database.stringToId(req.params.id);
-        var data = req.body;
-        delete data.authUser;
+        var notes = req.body.notes;
+        delete notes.authUser;
         UsersController.db.updateRecord(UsersController.usersTable, { _id: id }, { $set: req.body })
             .then(function (results) { return results ? (res.send({ fn: 'updateNotes', status: 'success' })) : (res.send({ fn: 'updateNotes', status: 'failure', data: 'Not found' })).end(); })
             .catch(function (err) { return res.send({ fn: 'updateNotes', status: 'failure', data: err }).end(); });
     };
     //Ask: Can you just delete a user and leave the notes in the system?
-    UsersController.prototype.deleteUser = function (req, res) {
-        var id = MongoDB_1.Database.stringToId(req.params.id);
-        var username = req.params.username;
-        UsersController.db.deleteRecord(UsersController.usersTable, { _id: id, username: username })
-            .then(function (results) { return results ? (res.send({ fn: 'deleteUser', status: 'success' })) : (res.send({ fn: 'deleteNotes', status: 'failure', data: 'Not found' })).end(); })
-            .catch(function (reason) { return res.status(500).send(reason).end(); });
-    };
+    /*deleteUser(req: express.Request, res: express.Response) {
+
+        const id = Database.stringToId(req.params.id);
+        const username = req.params.username;
+        UsersController.db.deleteRecord(UsersController.usersTable, { _id: id, username:username })
+            .then((results) => results ? (res.send({ fn: 'deleteUser', status: 'success' })) : (res.send({ fn: 'deleteNotes', status: 'failure', data: 'Not found' })).end())
+            .catch((reason) => res.status(500).send(reason).end());
+
+    }*/
     //Question follow-up
     UsersController.prototype.deleteNotes = function (req, res) {
         var id = MongoDB_1.Database.stringToId(req.params.id);
-        UsersController.db.deleteRecord(UsersController.usersTable, { _id: id })
-            .then(function (results) { return results ? (res.send({ fn: 'deleteNotes', status: 'success' })) : (res.send({ fn: 'deleteNotes', status: 'failure', data: 'Not found' })).end(); })
+        var note_id = MongoDB_1.Database.stringToId(req.params.noteid);
+        UsersController.db.getOneRecord(UsersController.usersTable, { _id: id })
+            .then(function (results) {
+            if (results.notes) {
+                results.notes = results.notes.filter(function (item) { return !item.id.equals(note_id); });
+                UsersController.db.updateRecord(UsersController.usersTable, { _id: id }, { $set: { notes: results.notes } })
+                    .then(function (results) { return results ? (res.send({ fn: 'deleteNotes', status: 'success' })) : (res.send({ fn: 'addNotes', status: 'failure', data: 'Not found' })).end(); })
+                    .catch(function (err) { return res.send({ fn: 'deleteNotes', status: 'failure', data: err }).end(); });
+            }
+        })
             .catch(function (reason) { return res.status(500).send(reason).end(); });
     };
     UsersController.db = new MongoDB_1.Database(config_1.Config.url, "users");
